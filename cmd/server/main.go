@@ -57,7 +57,7 @@ func UpdateHandler(storage Storage) gin.HandlerFunc {
 		}
 
 		if metricType != Gauge && metricType != Counter {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metric type"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid metric type!"})
 			return
 		}
 
@@ -65,7 +65,7 @@ func UpdateHandler(storage Storage) gin.HandlerFunc {
 		case Gauge:
 			value, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid gauge value"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid gauge value!"})
 				return
 			}
 			storage.UpdateGauge(metricName, value)
