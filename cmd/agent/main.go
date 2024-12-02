@@ -137,11 +137,11 @@ func (a *Agent) runSleep() {
 }
 
 func main() {
-	a := flag.String("a", "http://localhost:8080", "server http://ip:port")
+	a := flag.String("a", "localhost:8080", "server http://ip:port")
 	r := flag.Int("r", 10, "agent report interval")
 	p := flag.Int("p", 2, "agent pull interval")
 	flag.Parse()
-	agent := NewAgent(*a, time.Duration(*p)*time.Second, time.Duration(*r)*time.Second)
-	fmt.Println("Start agent", time.Now())
+	agent := NewAgent("http://"+*a, time.Duration(*p)*time.Second, time.Duration(*r)*time.Second)
+	fmt.Println("Start agent on:", "http://"+*a, time.Now())
 	agent.runSleep()
 }
