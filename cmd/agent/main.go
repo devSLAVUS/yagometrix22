@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+
+	"github.com/caarlos0/env"
 )
 
 type MetricType string
@@ -15,6 +17,12 @@ const (
 	Gauge   MetricType = "gauge"
 	Counter MetricType = "counter"
 )
+
+type Config struct {
+	Address        string `env:"ADDRESS" envDefault:"localhost:8080"`
+	PullInterval   int    `env:"POLL_INTERVAL" envDefault:"2"`
+	ReportInterval int    `env:"REPORT_INTERVAL" envDefault:"10"`
+}
 
 type Agent struct {
 	PullCount      int64
@@ -137,11 +145,35 @@ func (a *Agent) runSleep() {
 }
 
 func main() {
-	a := flag.String("a", "localhost:8080", "server http://ip:port")
-	r := flag.Int("r", 10, "agent report interval")
-	p := flag.Int("p", 2, "agent pull interval")
+	var cfg Config
+	if err := env.Parse(&cfg); err != nil {
+		fmt.Printf("Error parsing environment variables: %v\n", err)
+		return
+	}
+
+	address := flag.String("a", cfg.Address, "server http://ip:port")
+	reportInterval := flag.Int("r", cfg.ReportInterval, "agent report interval in seconds")
+	pullInterval := flag.Int("p", cfg.PullInterval, "agent poll interval in seconds")
 	flag.Parse()
-	agent := NewAgent("http://"+*a, time.Duration(*p)*time.Second, time.Duration(*r)*time.Second)
-	fmt.Println("Start agent on:", "http://"+*a, time.Now())
+
+	if *address != cfg.Address {
+		cfg.Address = *address
+	}
+	if *pullInterval != cfg.PullInterval {
+		cfg.PullInterval = *pullInterval
+	}
+	if *reportInterval != cfg.ReportInterval {
+		cfg.ReportInterval = *reportInterval
+	}
+
+	agent := NewAgent(
+		"http://"+cfg.Address,
+		time.Duration(cfg.PullInterval)*time.Second,
+		time.Duration(cfg.ReportInterval)*time.Second,
+	)
+
+	fmt.Printf("Starting agent on %s at %s\n", "http://"+cfg.Address, time.Now())
+	fmt.Printf("Poll Interval: %d seconds, Report Interval: %d seconds\n", cfg.PullInterval, cfg.ReportInterval)
+
 	agent.runSleep()
 }
