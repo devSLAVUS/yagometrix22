@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/caarlos0/env"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +15,10 @@ const (
 	Gauge   = "gauge"
 	Counter = "counter"
 )
+
+type Config struct {
+	Address string `env:"ADDRESS" envDefault:"localhost:8080"`
+}
 
 type Storage interface {
 	UpdateGauge(name string, value float64)
@@ -133,15 +138,24 @@ func getValueHandler(storage Storage) gin.HandlerFunc {
 }
 
 func main() {
-	a := flag.String("a", "localhost:8080", "server ip:port")
+	var cfg Config
+	if err := env.Parse(&cfg); err != nil {
+		fmt.Printf("Error parsing environment variables: %v\n", err)
+		return
+	}
+	address := flag.String("a", cfg.Address, "server ip:port")
 	flag.Parse()
+	if *address != cfg.Address {
+		cfg.Address = *address
+	}
+
 	r := gin.Default()
 	var storage Storage = NewMemStorage()
 
 	r.POST("/update/:type/:name/:value", UpdateHandler(storage))
 	r.GET("/value/:type/:name", getValueHandler(storage))
 	r.GET("/", getMetricsHandler(storage))
-	if err := r.Run(*a); err != nil {
+	if err := r.Run(cfg.Address); err != nil {
 		panic(err)
 	}
 	fmt.Println("server start:", time.Now())
