@@ -64,7 +64,7 @@ func (ms *MemStorage) GetCounterValue(name string) (int64, bool) {
 
 }
 
-func UpdateHandler(storage Storage) gin.HandlerFunc {
+func updHandler(storage Storage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		metricType := c.Param("type")
 		metricName := c.Param("name")
@@ -156,7 +156,7 @@ func main() {
 	r := gin.Default()
 	var storage Storage = NewMemStorage()
 
-	r.POST("/update/:type/:name/:value", UpdateHandler(storage))
+	r.POST("/update/:type/:name/:value", updHandler(storage))
 	r.GET("/value/:type/:name", getValueHandler(storage))
 	r.GET("/", getMetricsHandler(storage))
 	if err := r.Run(cfg.Address); err != nil {
