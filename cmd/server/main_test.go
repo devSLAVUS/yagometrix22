@@ -30,7 +30,7 @@ func TestUpdateHandler(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.POST("/update/:type/:name/:value", UpdateHandler(storage))
+	router.POST("/update/:type/:name/:value", updHandler(storage))
 
 	req := httptest.NewRequest(http.MethodPost, "/update/gauge/TestGauge/123.45", nil)
 	rec := httptest.NewRecorder()
