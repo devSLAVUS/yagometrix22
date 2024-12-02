@@ -1,8 +1,11 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -130,14 +133,16 @@ func getValueHandler(storage Storage) gin.HandlerFunc {
 }
 
 func main() {
+	a := flag.String("a", "localhost:8080", "server ip:port")
+	flag.Parse()
 	r := gin.Default()
 	var storage Storage = NewMemStorage()
 
 	r.POST("/update/:type/:name/:value", UpdateHandler(storage))
 	r.GET("/value/:type/:name", getValueHandler(storage))
 	r.GET("/", getMetricsHandler(storage))
-
-	if err := r.Run(":8080"); err != nil {
+	if err := r.Run(*a); err != nil {
 		panic(err)
 	}
+	fmt.Println("server start:", time.Now())
 }

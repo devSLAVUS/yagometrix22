@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -136,7 +137,11 @@ func (a *Agent) runSleep() {
 }
 
 func main() {
-	agent := NewAgent("http://localhost:8080", 2*time.Second, 10*time.Second)
-	fmt.Println("Start agent")
+	a := flag.String("a", "http://localhost:8080", "server http://ip:port")
+	r := flag.Int("r", 10, "agent report interval")
+	p := flag.Int("p", 2, "agent pull interval")
+	flag.Parse()
+	agent := NewAgent(*a, time.Duration(*p)*time.Second, time.Duration(*r)*time.Second)
+	fmt.Println("Start agent", time.Now())
 	agent.runSleep()
 }
