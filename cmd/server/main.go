@@ -143,7 +143,11 @@ func main() {
 		fmt.Printf("Error parsing environment variables: %v\n", err)
 		return
 	}
-	address := flag.String("a", cfg.Address, "server ip:port")
+	address := flag.String(
+		"a",
+		cfg.Address,
+		"server ip:port",
+	)
 	flag.Parse()
 	if *address != cfg.Address {
 		cfg.Address = *address
