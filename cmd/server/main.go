@@ -16,8 +16,8 @@ type Storage interface {
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
 	GetMetrics() map[string]interface{}
-	GetGaugeValue(name string) (float64, error)
-	GetCounterValue(name string) (int64, error)
+	GetGaugeValue(name string) (float64, bool)
+	GetCounterValue(name string) (int64, bool)
 }
 
 type MemStorage struct {
@@ -46,11 +46,13 @@ func (ms *MemStorage) GetMetrics() map[string]interface{} {
 		"counter": ms.CounterMetrics,
 	}
 }
-func (ms *MemStorage) GetGaugeValue(name string) (float64, error) {
-	return ms.GaugeMetrics[name], nil
+func (ms *MemStorage) GetGaugeValue(name string) (float64, bool) {
+	value, ok := ms.GaugeMetrics[name]
+	return value, ok
 }
-func (ms *MemStorage) GetCounterValue(name string) (int64, error) {
-	return ms.CounterMetrics[name], nil
+func (ms *MemStorage) GetCounterValue(name string) (int64, bool) {
+	value, ok := ms.CounterMetrics[name]
+	return value, ok
 
 }
 
@@ -108,20 +110,21 @@ func getValueHandler(storage Storage) gin.HandlerFunc {
 		}
 		switch metricType {
 		case Gauge:
-			value, err := storage.GetGaugeValue(metricName)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid gauge name"})
+			value, ok := storage.GetGaugeValue(metricName)
+			if ok {
+				c.JSON(http.StatusOK, value)
+			} else {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Invalid gauge name"})
 				return
 			}
-			c.JSON(http.StatusOK, value)
-
 		case Counter:
-			value, err := storage.GetCounterValue(metricName)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid counter name"})
+			value, ok := storage.GetCounterValue(metricName)
+			if ok {
+				c.JSON(http.StatusOK, value)
+			} else {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Invalid counter name"})
 				return
 			}
-			c.JSON(http.StatusOK, value)
 		}
 	}
 }
