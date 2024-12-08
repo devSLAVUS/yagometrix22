@@ -11,8 +11,8 @@ func NewRouter(handler *handlers.Handlers) *gin.Engine {
 
 	// Регистрация маршрутов
 	r.POST("/update/:type/:name/:value", handler.UpdateMetricHandler)
-	r.GET("/value/:type/:name", handler.GetMetricHandler)
-	r.GET("/", handler.GetAllMetricsHandler)
+	r.GET("/value/:type/:name", handler.GetMetricValueHandler)
+	r.GET("/", handler.GetMetricsHandler)
 
 	return r
 }

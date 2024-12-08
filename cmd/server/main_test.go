@@ -17,7 +17,15 @@ func TestMemStorage_UpdateGauge(t *testing.T) {
 	store := storage.NewMemStorage()
 	store.UpdateGauge("TestGauge", 123.45)
 
-	assert.Equal(t, 123.45, store.GetAllMetrics()["TestGauge"].(float64), "bad gauge value")
+	metrics := store.GetAllMetrics()
+	t.Logf("Metrics: %+v", metrics) // Для отладки
+
+	value, exists := metrics["TestGauge"]
+	if !exists {
+		t.Fatalf("Gauge metric 'TestGauge' does not exist")
+	}
+
+	assert.Equal(t, 123.45, value.(float64), "bad gauge value")
 }
 
 func TestMemStorage_UpdateCounter(t *testing.T) {
@@ -25,7 +33,15 @@ func TestMemStorage_UpdateCounter(t *testing.T) {
 	store.UpdateCounter("TestCounter", 10)
 	store.UpdateCounter("TestCounter", 5)
 
-	assert.Equal(t, int64(15), store.GetAllMetrics()["TestCounter"].(int64), "bad counter value")
+	metrics := store.GetAllMetrics()
+	t.Logf("Metrics: %+v", metrics) // Для отладки
+
+	value, exists := metrics["TestCounter"]
+	if !exists {
+		t.Fatalf("Counter metric 'TestCounter' does not exist")
+	}
+
+	assert.Equal(t, int64(15), value.(int64), "bad counter value")
 }
 
 func TestUpdateMetricHandler(t *testing.T) {
