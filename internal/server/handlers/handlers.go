@@ -63,5 +63,5 @@ func (h *Handlers) GetMetricValueHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"value": metric.GetValue()})
+	c.JSON(http.StatusOK, metric.GetValue())
 }
