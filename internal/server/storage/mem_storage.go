@@ -76,9 +76,20 @@ func (ms *MemStorage) UpdateCounter(name string, value int64) {
 func (ms *MemStorage) GetAllMetrics() map[string]interface{} {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
-	result := make(map[string]interface{})
+
+	result := map[string]interface{}{
+		"gauge":   make(map[string]float64),
+		"counter": make(map[string]int64),
+	}
+
+	// Разделяем метрики на Gauge и Counter
 	for name, metric := range ms.metrics {
-		result[name] = metric.GetValue()
+		switch m := metric.(type) {
+		case *Gauge:
+			result["gauge"].(map[string]float64)[name] = float64(*m)
+		case *Counter:
+			result["counter"].(map[string]int64)[name] = int64(*m)
+		}
 	}
 	return result
 }
