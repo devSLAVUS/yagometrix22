@@ -5,11 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// NewRouter создает новый маршрутизатор с зарегистрированными маршрутами.
 func NewRouter(handler *handlers.Handlers) *gin.Engine {
 	r := gin.New()
 
-	// Регистрация маршрутов
 	r.POST("/update/:type/:name/:value", handler.UpdateMetricHandler)
 	r.GET("/value/:type/:name", handler.GetMetricValueHandler)
 	r.GET("/", handler.GetMetricsHandler)

@@ -1,6 +1,9 @@
 package storage
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type Metric interface {
 	GetValue() interface{}
@@ -38,6 +41,7 @@ func (c *Counter) UpdateValue(value interface{}) error {
 }
 
 type MemStorage struct {
+	mu      sync.RWMutex
 	metrics map[string]Metric
 }
 
@@ -48,6 +52,8 @@ func NewMemStorage() *MemStorage {
 }
 
 func (ms *MemStorage) UpdateGauge(name string, value float64) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 	if metric, ok := ms.metrics[name]; ok {
 		_ = metric.UpdateValue(value)
 	} else {
@@ -57,6 +63,8 @@ func (ms *MemStorage) UpdateGauge(name string, value float64) {
 }
 
 func (ms *MemStorage) UpdateCounter(name string, value int64) {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
 	if metric, ok := ms.metrics[name]; ok {
 		_ = metric.UpdateValue(value)
 	} else {
@@ -66,6 +74,8 @@ func (ms *MemStorage) UpdateCounter(name string, value int64) {
 }
 
 func (ms *MemStorage) GetAllMetrics() map[string]interface{} {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
 	result := make(map[string]interface{})
 	for name, metric := range ms.metrics {
 		result[name] = metric.GetValue()
@@ -74,6 +84,8 @@ func (ms *MemStorage) GetAllMetrics() map[string]interface{} {
 }
 
 func (ms *MemStorage) GetMetric(name string) (Metric, bool) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
 	metric, ok := ms.metrics[name]
 	return metric, ok
 }
