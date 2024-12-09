@@ -20,12 +20,17 @@ func TestMemStorage_UpdateGauge(t *testing.T) {
 	metrics := store.GetAllMetrics()
 	t.Logf("Metrics: %+v", metrics) // Для отладки
 
-	value, exists := metrics["TestGauge"]
+	gaugeMetrics, exists := metrics["gauge"].(map[string]float64)
+	if !exists {
+		t.Fatalf("Gauge metrics category does not exist")
+	}
+
+	value, exists := gaugeMetrics["TestGauge"]
 	if !exists {
 		t.Fatalf("Gauge metric 'TestGauge' does not exist")
 	}
 
-	assert.Equal(t, 123.45, value.(float64), "bad gauge value")
+	assert.Equal(t, 123.45, value, "bad gauge value")
 }
 
 func TestMemStorage_UpdateCounter(t *testing.T) {
@@ -36,12 +41,17 @@ func TestMemStorage_UpdateCounter(t *testing.T) {
 	metrics := store.GetAllMetrics()
 	t.Logf("Metrics: %+v", metrics) // Для отладки
 
-	value, exists := metrics["TestCounter"]
+	counterMetrics, exists := metrics["counter"].(map[string]int64)
+	if !exists {
+		t.Fatalf("Counter metrics category does not exist")
+	}
+
+	value, exists := counterMetrics["TestCounter"]
 	if !exists {
 		t.Fatalf("Counter metric 'TestCounter' does not exist")
 	}
 
-	assert.Equal(t, int64(15), value.(int64), "bad counter value")
+	assert.Equal(t, int64(15), value, "bad counter value")
 }
 
 func TestUpdateMetricHandler(t *testing.T) {
@@ -57,7 +67,10 @@ func TestUpdateMetricHandler(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, 123.45, store.GetAllMetrics()["TestGauge"].(float64))
+
+	metrics := store.GetAllMetrics()
+	gaugeMetrics := metrics["gauge"].(map[string]float64)
+	assert.Equal(t, 123.45, gaugeMetrics["TestGauge"])
 
 	// Test for updating counter metric
 	req = httptest.NewRequest(http.MethodPost, "/update/counter/TestCounter/10", nil)
@@ -65,7 +78,10 @@ func TestUpdateMetricHandler(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, int64(10), store.GetAllMetrics()["TestCounter"].(int64))
+
+	metrics = store.GetAllMetrics()
+	counterMetrics := metrics["counter"].(map[string]int64)
+	assert.Equal(t, int64(10), counterMetrics["TestCounter"])
 
 	// Test for invalid metric type
 	req = httptest.NewRequest(http.MethodPost, "/update/invalid/TestMetric/123", nil)
@@ -90,6 +106,6 @@ func TestGetMetricsHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	expectedBody := `{"TestGauge":123.45,"TestCounter":10}`
+	expectedBody := `{"gauge":{"TestGauge":123.45},"counter":{"TestCounter":10}}`
 	assert.JSONEq(t, expectedBody, rec.Body.String(), "bad response")
 }
