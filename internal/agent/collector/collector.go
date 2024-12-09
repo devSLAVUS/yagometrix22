@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type Agent struct {
 	ReportInterval time.Duration
 	ServerAddress  string
 	Metrics        map[string]float64
+	mu             sync.RWMutex
 }
 
 func NewAgent(serverAddress string, pullInterval, reportInterval time.Duration) *Agent {
@@ -33,6 +35,8 @@ func NewAgent(serverAddress string, pullInterval, reportInterval time.Duration) 
 }
 
 func (a *Agent) CollectMetrics() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
@@ -70,6 +74,8 @@ func (a *Agent) CollectMetrics() {
 }
 
 func (a *Agent) SendMetric(metricType MetricType, metricName string, metricValue float64) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
 	url := fmt.Sprintf("%s/update/%s/%s/%v", a.ServerAddress, metricType, metricName, metricValue)
 	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
@@ -98,6 +104,7 @@ func (a *Agent) RunSleep() {
 		a.CollectMetrics()
 
 		time.Sleep(a.ReportInterval - a.PullInterval)
+		a.mu.RLock()
 		for name, value := range a.Metrics {
 			var metricType MetricType
 			if name == "PullCount" {
@@ -107,5 +114,6 @@ func (a *Agent) RunSleep() {
 			}
 			a.SendMetric(metricType, name, value)
 		}
+		a.mu.RUnlock()
 	}
 }
